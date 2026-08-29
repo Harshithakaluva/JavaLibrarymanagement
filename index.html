@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>City Central Library — Circulation System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Source+Serif+4:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EFE7D8;
+  --cardstock:#F8F3E8;
+  --ink:#24272B;
+  --ink-soft:#5A5548;
+  --forest:#2F4F3E;
+  --forest-dark:#1F3A2E;
+  --brass:#A9772F;
+  --brass-light:#C79A4C;
+  --stamp:#9B3B2B;
+  --rule:#D8CBAE;
+  --shadow: 0 1px 0 rgba(36,39,43,0.06), 0 8px 20px -12px rgba(36,39,43,0.25);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(ellipse at top left, rgba(169,119,47,0.06), transparent 55%),
+    var(--paper);
+  color:var(--ink);
+  font-family:'Source Serif 4', serif;
+  min-height:100vh;
+}
+::selection{ background: var(--brass-light); color:var(--forest-dark); }
+
+/* ---------- Header ---------- */
+header{
+  padding:36px 24px 22px;
+  border-bottom:2px solid var(--forest-dark);
+  position:relative;
+}
+.header-inner{ max-width:1080px; margin:0 auto; }
+.eyebrow{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--brass);
+  display:flex; align-items:center; gap:10px;
+  margin-bottom:6px;
+}
+.eyebrow::before{ content:""; width:22px; height:1px; background:var(--brass); display:inline-block; }
+h1{
+  font-family:'Fraunces', serif;
+  font-optical-sizing:auto;
+  font-weight:600;
+  font-size:clamp(30px,4vw,44px);
+  margin:0 0 4px;
+  color:var(--forest-dark);
+  letter-spacing:-0.01em;
+}
+.subtitle{ color:var(--ink-soft); font-style:italic; font-size:15px; }
+
+.stat-row{
+  display:flex; flex-wrap:wrap; gap:0;
+  margin-top:26px;
+  border-top:1px solid var(--rule);
+}
+.stat{
+  flex:1; min-width:130px;
+  padding:14px 18px 4px 0;
+  border-right:1px solid var(--rule);
+}
+.stat:last-child{ border-right:none; }
+.stat .num{
+  font-family:'Fraunces', serif; font-weight:600; font-size:28px; color:var(--forest-dark);
+  display:block; line-height:1;
+}
+.stat .label{
+  font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--ink-soft); display:block; margin-top:6px;
+}
+
+/* ---------- Nav ---------- */
+nav{
+  max-width:1080px; margin:0 auto; padding:0 24px;
+  display:flex; gap:2px; margin-top:0;
+}
+.tab{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:12.5px; letter-spacing:.05em;
+  background:var(--cardstock);
+  border:1px solid var(--rule); border-bottom:none;
+  padding:11px 18px 10px;
+  cursor:pointer;
+  color:var(--ink-soft);
+  position:relative; top:1px;
+  transition:color .15s, background .15s;
+}
+.tab.active{
+  color:var(--forest-dark);
+  background:var(--paper);
+  border-color:var(--forest-dark);
+  font-weight:600;
+}
+main{ max-width:1080px; margin:0 auto; padding:26px 24px 80px; border-top:1px solid var(--forest-dark); }
+.panel{ display:none; animation:fade .25s ease; }
+.panel.active{ display:block; }
+@keyframes fade{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+
+/* ---------- Section headers ---------- */
+.section-head{ display:flex; align-items:baseline; justify-content:space-between; gap:16px; margin:6px 0 18px; flex-wrap:wrap; }
+.section-head h2{ font-family:'Fraunces', serif; font-weight:600; font-size:22px; color:var(--forest-dark); margin:0; }
+.section-head .count{ font-family:'IBM Plex Mono', monospace; font-size:11.5px; color:var(--ink-soft); }
+
+/* ---------- Search / toolbar ---------- */
+.toolbar{ display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+input[type=text], input[type=number], input[type=email], select{
+  font-family:'Source Serif 4', serif;
+  font-size:14px;
+  background:var(--cardstock);
+  border:1px solid var(--rule);
+  padding:10px 12px;
+  color:var(--ink);
+  outline:none;
+  border-radius:2px;
+}
+input:focus, select:focus{ border-color:var(--brass); box-shadow:0 0 0 3px rgba(169,119,47,0.15); }
+.toolbar input[type=text]{ flex:1; min-width:200px; }
+
+button{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:12px; letter-spacing:.04em;
+  padding:10px 16px;
+  background:var(--forest-dark);
+  color:var(--paper);
+  border:1px solid var(--forest-dark);
+  cursor:pointer;
+  border-radius:2px;
+  transition:background .15s, transform .05s;
+}
+button:hover{ background:var(--forest); }
+button:active{ transform:translateY(1px); }
+button.ghost{ background:transparent; color:var(--forest-dark); }
+button.ghost:hover{ background:rgba(47,79,62,0.08); }
+button:focus-visible, .tab:focus-visible, select:focus-visible{ outline:2px solid var(--brass); outline-offset:2px; }
+button.danger{ background:var(--stamp); border-color:var(--stamp); }
+
+/* ---------- Book catalog cards + shelf signature ---------- */
+.catalog-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(240px,1fr)); gap:14px; }
+.book-card{
+  background:var(--cardstock);
+  border:1px solid var(--rule);
+  box-shadow:var(--shadow);
+  padding:16px 16px 14px;
+  border-radius:2px;
+  position:relative;
+}
+.book-card .isbn{ font-family:'IBM Plex Mono', monospace; font-size:10px; color:var(--brass); letter-spacing:.06em; }
+.book-card h3{ font-family:'Fraunces', serif; font-weight:600; font-size:17px; margin:4px 0 2px; color:var(--ink); line-height:1.25; }
+.book-card .author{ font-style:italic; color:var(--ink-soft); font-size:13px; margin-bottom:12px; }
+.shelf{ display:flex; gap:3px; align-items:flex-end; height:34px; margin-bottom:8px; }
+.spine{ width:9px; border-radius:1px 1px 0 0; position:relative; }
+.spine.out{ opacity:.28; background-image:repeating-linear-gradient(45deg, rgba(36,39,43,.5) 0 2px, transparent 2px 5px) !important; }
+.avail-line{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-soft); }
+.avail-line b{ color:var(--forest-dark); }
+
+/* ---------- Forms as catalog-card inserts ---------- */
+.form-card{
+  background:var(--cardstock); border:1px dashed var(--brass);
+  padding:18px; border-radius:2px; margin-bottom:22px;
+}
+.form-card h3{ font-family:'Fraunces', serif; font-size:16px; margin:0 0 12px; color:var(--forest-dark); }
+.form-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:10px; margin-bottom:12px; }
+.form-grid label{ display:flex; flex-direction:column; gap:5px; font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--ink-soft); letter-spacing:.05em; text-transform:uppercase; }
+
+/* ---------- Members list ---------- */
+.member-row{
+  display:flex; justify-content:space-between; align-items:center; gap:14px;
+  padding:14px 4px; border-bottom:1px solid var(--rule); flex-wrap:wrap;
+}
+.member-row .who{ display:flex; flex-direction:column; }
+.member-row .name{ font-family:'Fraunces', serif; font-weight:600; font-size:16px; }
+.member-row .meta{ font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-soft); }
+.borrowed-tags{ display:flex; gap:6px; flex-wrap:wrap; max-width:360px; justify-content:flex-end; }
+.borrowed-tags span{
+  font-family:'IBM Plex Mono', monospace; font-size:10.5px;
+  border:1px solid var(--rule); padding:3px 7px; border-radius:20px; color:var(--ink-soft);
+}
+
+/* ---------- Ledger ---------- */
+.ledger-entry{
+  display:grid; grid-template-columns:150px 90px 1fr; gap:14px;
+  padding:10px 4px; border-bottom:1px solid var(--rule);
+  font-family:'IBM Plex Mono', monospace; font-size:12.5px; align-items:center;
+}
+.ledger-entry .ts{ color:var(--ink-soft); }
+.ledger-entry .kind{ font-weight:600; letter-spacing:.04em; }
+.ledger-entry .kind.ISSUE{ color:var(--stamp); }
+.ledger-entry .kind.RETURN{ color:var(--forest); }
+.ledger-entry .desc{ font-family:'Source Serif 4', serif; font-size:14px; }
+.empty{ padding:30px 4px; color:var(--ink-soft); font-style:italic; }
+
+/* ---------- Desk (issue/return) ---------- */
+.desk-grid{ display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+@media(max-width:700px){ .desk-grid{ grid-template-columns:1fr; } .ledger-entry{ grid-template-columns:110px 70px 1fr; font-size:11px;} }
+
+/* ---------- Stamp feedback ---------- */
+#stampWrap{ position:fixed; top:24px; right:24px; z-index:50; pointer-events:none; }
+.stamp-msg{
+  font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:.04em;
+  background:var(--cardstock); border:2px solid var(--stamp); color:var(--stamp);
+  padding:12px 16px; border-radius:2px; box-shadow:var(--shadow);
+  transform:rotate(-3deg) scale(0.9); opacity:0;
+  transition:transform .28s cubic-bezier(.34,1.56,.64,1), opacity .28s;
+  margin-bottom:8px; text-transform:uppercase; max-width:280px;
+}
+.stamp-msg.ok{ border-color:var(--forest); color:var(--forest-dark); }
+.stamp-msg.show{ transform:rotate(-3deg) scale(1); opacity:1; }
+
+@media (prefers-reduced-motion: reduce){
+  .panel{ animation:none; }
+  .stamp-msg{ transition:none; }
+}
+
+/* ---------- Connection banner ---------- */
+#connBanner{
+  display:none;
+  background:var(--stamp); color:var(--cardstock);
+  font-family:'IBM Plex Mono', monospace; font-size:12.5px;
+  padding:10px 24px; text-align:center; letter-spacing:.02em;
+}
+#connBanner code{ background:rgba(255,255,255,0.15); padding:1px 6px; border-radius:3px; }
+#connBanner.show{ display:block; }
+</style>
+</head>
+<body>
+
+<div id="connBanner">
+  Can't reach the Java backend at <code>http://localhost:8080</code>. Start it with
+  <code>java -cp bin com.library.api.ApiServer</code>, then reload this page.
+</div>
+
+<header>
+  <div class="header-inner">
+    <div class="eyebrow">Circulation System · Est. Card Catalog No. 001</div>
+    <h1>City Central Library</h1>
+    <div class="subtitle">A record of every book on the shelf, and everyone who's borrowed one.</div>
+    <div class="stat-row" id="statRow"></div>
+  </div>
+</header>
+
+<nav>
+  <div class="tab active" data-panel="catalog">Catalog</div>
+  <div class="tab" data-panel="desk">Circulation Desk</div>
+  <div class="tab" data-panel="members">Members</div>
+  <div class="tab" data-panel="ledger">Ledger</div>
+</nav>
+
+<main>
+
+  <!-- CATALOG -->
+  <section class="panel active" id="panel-catalog">
+    <div class="section-head">
+      <h2>The Catalog</h2>
+      <span class="count" id="catalogCount"></span>
+    </div>
+
+    <div class="form-card">
+      <h3>Add a title</h3>
+      <div class="form-grid">
+        <label>ISBN <input type="text" id="nb-isbn" placeholder="ISBN010"></label>
+        <label>Title <input type="text" id="nb-title" placeholder="Book title"></label>
+        <label>Author <input type="text" id="nb-author" placeholder="Author name"></label>
+        <label>Copies <input type="number" id="nb-copies" min="1" value="1"></label>
+      </div>
+      <button id="addBookBtn">Add to catalog</button>
+    </div>
+
+    <div class="toolbar">
+      <input type="text" id="searchBox" placeholder="Search by title…">
+    </div>
+
+    <div class="catalog-grid" id="catalogGrid"></div>
+  </section>
+
+  <!-- DESK -->
+  <section class="panel" id="panel-desk">
+    <div class="section-head"><h2>Circulation Desk</h2></div>
+    <div class="desk-grid">
+      <div class="form-card">
+        <h3>Issue a book</h3>
+        <div class="form-grid">
+          <label>Member <select id="issue-member"></select></label>
+          <label>Book <select id="issue-book"></select></label>
+        </div>
+        <button id="issueBtn">Issue book</button>
+      </div>
+      <div class="form-card">
+        <h3>Return a book</h3>
+        <div class="form-grid">
+          <label>Member <select id="return-member"></select></label>
+          <label>Book <select id="return-book"></select></label>
+        </div>
+        <button id="returnBtn" class="ghost" style="border-color:var(--forest-dark);">Return book</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MEMBERS -->
+  <section class="panel" id="panel-members">
+    <div class="section-head">
+      <h2>Registered Members</h2>
+      <span class="count" id="memberCount"></span>
+    </div>
+
+    <div class="form-card">
+      <h3>Register a member</h3>
+      <div class="form-grid">
+        <label>Member ID <input type="text" id="nm-id" placeholder="M003"></label>
+        <label>Name <input type="text" id="nm-name" placeholder="Full name"></label>
+        <label>Email <input type="email" id="nm-email" placeholder="name@example.com"></label>
+      </div>
+      <button id="addMemberBtn">Register</button>
+    </div>
+
+    <div id="memberList"></div>
+  </section>
+
+  <!-- LEDGER -->
+  <section class="panel" id="panel-ledger">
+    <div class="section-head">
+      <h2>Transaction Ledger</h2>
+      <span class="count" id="ledgerCount"></span>
+    </div>
+    <div id="ledgerList"></div>
+  </section>
+
+</main>
+
+<div id="stampWrap"></div>
+
+<script>
+/* =====================================================================
+   This UI now talks to the REAL Java backend (com.library.api.ApiServer)
+   over HTTP instead of reimplementing the logic in JS. Every action below
+   is a fetch() call; the actual borrow-limit checks, availability checks,
+   and transaction logging all happen inside the Java Library/Book/Member
+   classes on the server.
+   ===================================================================== */
+
+const API = "http://localhost:8080/api";
+
+let books = [];
+let members = [];
+let transactions = [];
+let searchTerm = "";
+let backendReachable = false;
+
+async function apiGet(path){
+  const res = await fetch(`${API}${path}`);
+  if(!res.ok){
+    const err = await res.json().catch(()=>({error:'Request failed'}));
+    throw new Error(err.error || 'Request failed');
+  }
+  return res.json();
+}
+
+async function apiPost(path, payload){
+  const res = await fetch(`${API}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+/* =====================================================================
+   Rendering
+   ===================================================================== */
+const spineColors = ["#2F4F3E","#A9772F","#9B3B2B","#3E5C76","#6B4226","#5C6B47"];
+function spineColorFor(isbn){
+  let h=0; for(const c of isbn) h = (h*31 + c.charCodeAt(0)) >>> 0;
+  return spineColors[h % spineColors.length];
+}
+
+function renderStats(){
+  const totalTitles = books.length;
+  const totalCopies = books.reduce((s,b)=>s+b.totalCopies,0);
+  const available = books.reduce((s,b)=>s+b.availableCopies,0);
+  const checkedOut = totalCopies - available;
+  const stats = [
+    [totalTitles, "Titles"], [totalCopies, "Total copies"],
+    [available, "On the shelf"], [checkedOut, "Checked out"],
+    [members.length, "Members"]
+  ];
+  document.getElementById('statRow').innerHTML = stats.map(([n,l]) =>
+    `<div class="stat"><span class="num">${n}</span><span class="label">${l}</span></div>`).join('');
+}
+
+function renderCatalog(){
+  const grid = document.getElementById('catalogGrid');
+  const shown = books
+    .filter(b => b.title.toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a,b)=>a.title.localeCompare(b.title));
+  document.getElementById('catalogCount').textContent = `${shown.length} of ${books.length} shown`;
+
+  if(shown.length === 0){
+    grid.innerHTML = `<div class="empty">No titles match “${searchTerm}”.</div>`;
+    return;
+  }
+
+  grid.innerHTML = shown.map(b => {
+    const spines = Array.from({length: b.totalCopies}, (_, i) => {
+      const out = i >= b.availableCopies;
+      const h = 22 + (i % 3) * 4;
+      return `<div class="spine ${out?'out':''}" style="height:${h}px;background:${spineColorFor(b.isbn)}"></div>`;
+    }).join('');
+    return `
+      <div class="book-card">
+        <div class="isbn">${b.isbn}</div>
+        <h3>${escapeHtml(b.title)}</h3>
+        <div class="author">${escapeHtml(b.author)}</div>
+        <div class="shelf">${spines}</div>
+        <div class="avail-line"><b>${b.availableCopies}</b> / ${b.totalCopies} available</div>
+      </div>`;
+  }).join('');
+}
+
+function renderMembers(){
+  document.getElementById('memberCount').textContent = `${members.length} registered`;
+  const el = document.getElementById('memberList');
+  if(members.length === 0){ el.innerHTML = `<div class="empty">No members yet.</div>`; return; }
+  el.innerHTML = members.map(m => {
+    const tags = m.borrowedIsbns.length
+      ? m.borrowedIsbns.map(isbn => `<span>${escapeHtml(books.find(b=>b.isbn===isbn)?.title || isbn)}</span>`).join('')
+      : `<span style="opacity:.5">none borrowed</span>`;
+    return `
+      <div class="member-row">
+        <div class="who">
+          <span class="name">${escapeHtml(m.name)}</span>
+          <span class="meta">${m.id} · ${escapeHtml(m.email)} · ${m.borrowedIsbns.length}/3 borrowed</span>
+        </div>
+        <div class="borrowed-tags">${tags}</div>
+      </div>`;
+  }).join('');
+}
+
+function renderLedger(){
+  document.getElementById('ledgerCount').textContent = `${transactions.length} entries`;
+  const el = document.getElementById('ledgerList');
+  if(transactions.length === 0){ el.innerHTML = `<div class="empty">No transactions recorded yet.</div>`; return; }
+  el.innerHTML = transactions.map(t => `
+    <div class="ledger-entry">
+      <span class="ts">${t.timestamp}</span>
+      <span class="kind ${t.type}">${t.type}</span>
+      <span class="desc">${escapeHtml(t.memberName)} — “${escapeHtml(t.bookTitle)}”</span>
+    </div>`).join('');
+}
+
+function renderDeskSelects(){
+  const memberOpts = members.map(m => `<option value="${m.id}">${escapeHtml(m.name)} (${m.id})</option>`).join('');
+  const availBookOpts = books.filter(b=>b.availableCopies > 0)
+    .map(b => `<option value="${b.isbn}">${escapeHtml(b.title)} — ${b.availableCopies} left</option>`).join('');
+  const allBookOpts = books.map(b => `<option value="${b.isbn}">${escapeHtml(b.title)}</option>`).join('');
+
+  document.getElementById('issue-member').innerHTML = memberOpts || `<option disabled>No members</option>`;
+  document.getElementById('issue-book').innerHTML = availBookOpts || `<option disabled>No copies available</option>`;
+  document.getElementById('return-member').innerHTML = memberOpts || `<option disabled>No members</option>`;
+  document.getElementById('return-book').innerHTML = allBookOpts || `<option disabled>No books</option>`;
+}
+
+function renderAll(){
+  renderStats(); renderCatalog(); renderMembers(); renderLedger(); renderDeskSelects();
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* =====================================================================
+   Feedback stamp
+   ===================================================================== */
+function stamp(message, ok){
+  const wrap = document.getElementById('stampWrap');
+  const el = document.createElement('div');
+  el.className = 'stamp-msg' + (ok ? ' ok' : '');
+  el.textContent = (ok ? '✓ ' : '✕ ') + message;
+  wrap.appendChild(el);
+  requestAnimationFrame(()=> el.classList.add('show'));
+  setTimeout(()=>{
+    el.style.opacity = '0';
+    setTimeout(()=> el.remove(), 300);
+  }, 2600);
+}
+
+/* =====================================================================
+   Loading data from the Java backend
+   ===================================================================== */
+async function loadAll(){
+  try{
+    const [b, m, t] = await Promise.all([
+      apiGet('/books'), apiGet('/members'), apiGet('/transactions')
+    ]);
+    books = b; members = m; transactions = t;
+    backendReachable = true;
+    document.getElementById('connBanner').classList.remove('show');
+    renderAll();
+  }catch(e){
+    backendReachable = false;
+    document.getElementById('connBanner').classList.add('show');
+  }
+}
+
+/* =====================================================================
+   Wiring
+   ===================================================================== */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+  });
+});
+
+document.getElementById('searchBox').addEventListener('input', e => {
+  searchTerm = e.target.value; renderCatalog();
+});
+
+document.getElementById('addBookBtn').addEventListener('click', async () => {
+  const isbn = document.getElementById('nb-isbn').value.trim();
+  const title = document.getElementById('nb-title').value.trim();
+  const author = document.getElementById('nb-author').value.trim();
+  const copies = parseInt(document.getElementById('nb-copies').value, 10) || 0;
+  if(!isbn || !title || !author || copies < 1){
+    stamp('Fill in all fields with at least 1 copy', false); return;
+  }
+  try{
+    await apiPost('/books', { isbn, title, author, copies });
+    ['nb-isbn','nb-title','nb-author'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('nb-copies').value = 1;
+    stamp(`“${title}” added to catalog`, true);
+    await loadAll();
+  }catch(e){ stamp(e.message, false); }
+});
+
+document.getElementById('addMemberBtn').addEventListener('click', async () => {
+  const id = document.getElementById('nm-id').value.trim();
+  const name = document.getElementById('nm-name').value.trim();
+  const email = document.getElementById('nm-email').value.trim();
+  if(!id || !name || !email){ stamp('Fill in all fields', false); return; }
+  try{
+    await apiPost('/members', { id, name, email });
+    ['nm-id','nm-name','nm-email'].forEach(f => document.getElementById(f).value = '');
+    stamp(`${name} registered`, true);
+    await loadAll();
+  }catch(e){ stamp(e.message, false); }
+});
+
+document.getElementById('issueBtn').addEventListener('click', async () => {
+  const memberId = document.getElementById('issue-member').value;
+  const isbn = document.getElementById('issue-book').value;
+  try{
+    await apiPost('/issue', { memberId, isbn });
+    stamp('Book issued', true);
+    await loadAll();
+  }catch(e){ stamp(e.message, false); }
+});
+
+document.getElementById('returnBtn').addEventListener('click', async () => {
+  const memberId = document.getElementById('return-member').value;
+  const isbn = document.getElementById('return-book').value;
+  try{
+    await apiPost('/return', { memberId, isbn });
+    stamp('Book returned', true);
+    await loadAll();
+  }catch(e){ stamp(e.message, false); }
+});
+
+loadAll();
+// Quietly retry every 5s if the backend wasn't reachable yet (e.g. still starting up)
+setInterval(() => { if(!backendReachable) loadAll(); }, 5000);
+</script>
+</body>
+</html>
